@@ -7,8 +7,8 @@ def count_trees(entry_list, down, right):
     width = len(entry_list[1])
     position = right
     trees = 0
-    for entry in entry_list[1:]:
-        if entry[position] == TREE:
+    for i in range(down, len(entry_list), down):
+        if entry_list[i][position] == TREE:
             trees += 1
         position += right
         position = position % width
