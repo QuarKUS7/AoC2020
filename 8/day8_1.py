@@ -1,79 +1,38 @@
-with open("day8.txt", "r") as f:
-    entry_list =  f.read().splitlines()
-
-
-def process_boot_code(entry_list):
-    boot_code = []
-    for entry in entry_list:
-        parsed = entry.split(' ')
-        code = {}
-        code['instruction'] = parsed[0]
-        code['amount'] = int(parsed[1])
-        code['visited'] = False
-        boot_code.append(code)
-    return boot_code
-
-def acc(code):
-    global acu
-    acu += code['amount']
-
-
-def jmp(code):
-    global index
-    index += code['amount'] -1
-
-def nop():
-    pass
-
-boot_code = process_boot_code(entry_list)
-def run(boot_code):
-
-    global index
-    global acu
-    while True:
-        if index > len(boot_code)-1:
-            print("ACU %i", acu)
-            return
-        code = boot_code[index]
-        index += 1
-        if code['instruction'] == 'acc':
-            if not code['visited']:
-                 acc(code)
-                 code['visited'] = True
-            else:
-#                print(acu)
-                #print(code)
-                break
-        elif code['instruction'] == 'jmp':
-            if not code['visited']:
-                jmp(code)
-                code['visited'] = True
-            else:
-               # print(acu)
-                #print(code)
-                break
-        else:
-            if not code['visited']:
-                nop()
-                code['visited'] = True
-            else:
-#                print(acu)
-                #print(code)
-                break
-
-#run(boot_code)
 import copy
-for i in range(len(boot_code)):
-    acu = 0
-    index = 0
-    if boot_code[i]['instruction'] == 'jmp':
-        tmp = copy.deepcopy(boot_code)
-        tmp[i]['instruction'] = 'nop'
-        run(tmp)
-for i in range(len(boot_code)):
-    acu = 0
-    index = 0
-    if boot_code[i]['instruction'] == 'nop':
-        tmp = copy.deepcopy(boot_code)
-        tmp[i]['instruction'] = 'jmp'
-        run(tmp)
+import pytest
+
+from day8 import process_boot_code, GameConsole
+
+
+def solve(entry_list):
+    boot_code = process_boot_code(entry_list)
+
+    for i in range(len(boot_code)):
+        if boot_code[i]['operation'] == 'jmp':
+            possible_boot_code = copy.deepcopy(boot_code)
+            possible_boot_code[i]['operation'] = 'nop'
+            device = GameConsole(possible_boot_code)
+            booted_correctly = device.boot_device()
+            if booted_correctly:
+                return device.acculumulator
+
+    for i in range(len(boot_code)):
+        if boot_code[i]['operation'] == 'nop':
+            possible_boot_code = copy.deepcopy(boot_code)
+            possible_boot_code[i]['operation'] = 'jmp'
+            device = GameConsole(possible_boot_code)
+            device.boot_device()
+            booted_correctly = device.boot_device()
+            if booted_correctly:
+                return device.acculumulator
+
+if __name__ == '__main__':
+    with open("day8.txt", "r") as f:
+        entry_list =  f.read().splitlines()
+
+    print(solve(entry_list))
+
+
+@pytest.mark.parametrize("entry_list, output", [(['nop +0', 'acc +1', 'jmp +4', 'acc +3', 'jmp -3', 'acc -99', 'acc +1', 'jmp -4', 'acc +6'], 8)])
+def test_solve(entry_list, output):
+    assert solve(entry_list) == output
