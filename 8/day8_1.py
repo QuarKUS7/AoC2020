@@ -8,23 +8,17 @@ def solve(entry_list):
     boot_code = process_boot_code(entry_list)
 
     for i in range(len(boot_code)):
-        if boot_code[i]['operation'] == 'jmp':
+        if boot_code[i]['operation'] != 'acc':
             possible_boot_code = copy.deepcopy(boot_code)
-            possible_boot_code[i]['operation'] = 'nop'
+            if boot_code[i]['operation'] == 'jmp':
+                possible_boot_code[i]['operation'] = 'nop'
+            else:
+                possible_boot_code[i]['operation'] = 'jmp'
             device = GameConsole(possible_boot_code)
             booted_correctly = device.boot_device()
             if booted_correctly:
-                return device.acculumulator
+                return device.accumulator
 
-    for i in range(len(boot_code)):
-        if boot_code[i]['operation'] == 'nop':
-            possible_boot_code = copy.deepcopy(boot_code)
-            possible_boot_code[i]['operation'] = 'jmp'
-            device = GameConsole(possible_boot_code)
-            device.boot_device()
-            booted_correctly = device.boot_device()
-            if booted_correctly:
-                return device.acculumulator
 
 if __name__ == '__main__':
     with open("day8.txt", "r") as f:

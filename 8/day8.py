@@ -17,12 +17,13 @@ def process_boot_code(entry_list):
 
 class GameConsole:
     def __init__(self, boot_code):
-        self.acculumulator = 0
+        self.accumulator = 0
         self.pointer = 0
         self.boot_code = boot_code
+        self.operations = {'acc':self.acc, 'jmp':self.jmp, 'nop':self.nop}
 
     def acc(self, instruction):
-        self.acculumulator += instruction['argument']
+        self.accumulator += instruction['argument']
 
     def jmp(self, instruction):
         self.pointer += instruction['argument'] -1
@@ -32,54 +33,27 @@ class GameConsole:
 
     def get_instruction(self):
         instruction = self.boot_code[self.pointer]
+        if instruction['visited']:
+            raise AlreadyVisitError
+
         self.pointer += 1
         return instruction
 
-    def abort(self, instruction):
-            print('Instruction {}, already visited!'.format(instruction))
-            print('Current acculumulator: {}'.format(self.acculumulator))
-            raise AlreadyVisitError
-
     def process_instruction(self, instruction):
-        if instruction['operation'] == 'acc':
-            if not instruction['visited']:
-                self.acc(instruction)
-                instruction['visited'] = True
-            else:
-                self.abort(instruction)
-
-        elif instruction['operation'] == 'jmp':
-            if not instruction['visited']:
-                self.jmp(instruction)
-                instruction['visited'] = True
-            else:
-                self.abort(instruction)
-
-        elif instruction['operation'] == 'nop':
-            if not instruction['visited']:
-                self.nop(instruction)
-                instruction['visited'] = True
-            else:
-                self.abort(instruction)
-        else:
-            print('Unknown operation {} in instruction {}'.format(instruction['operation'], instruction))
-            self.abort(instruction)
+        operation = self.operations[instruction['operation']]
+        operation(instruction)
+        instruction['visited'] = True
 
     def boot_device(self):
-
-
         while True:
             try:
                 instruction = self.get_instruction()
             except IndexError:
-                print('All instructionion processed!')
-                print('Current acculumulator {}'.format(self.acculumulator))
                 return True
-
-            try:
-                self.process_instruction(instruction)
             except AlreadyVisitError:
                 return False
+
+            self.process_instruction(instruction)
 
 
 def solve(entry_list):
@@ -87,8 +61,7 @@ def solve(entry_list):
 
     device = GameConsole(boot_code)
     device.boot_device()
-    return device.acculumulator
-
+    return device.accumulator
 
 if __name__ == '__main__':
     with open("day8.txt", "r") as f:
